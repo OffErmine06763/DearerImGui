@@ -95,12 +95,14 @@
     <ClInclude Include="Vendor\GLFW\include\GLFW\glfw3native.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Src\Main.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="Vendor\Libs\GLFW\Debug\glfw3.lib" />
-    <Library Include="Vendor\Libs\GLFW\Release\glfw3.lib" />
+    <Text Include="CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Vendor\Libs\GLFW\Debug\glfw3.pdb" />
+    <None Include="CMakePresets.json" />
   </ItemGroup>
 </Project>

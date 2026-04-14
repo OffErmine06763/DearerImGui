@@ -1,0 +1,45 @@
+cmake_minimum_required(VERSION 3.16)
+
+project(App LANGUAGES C CXX)
+
+# ==================================================
+# C++ Standard
+# ==================================================
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# ==================================================
+# Source Files
+# ==================================================
+file(GLOB_RECURSE CPP_SOURCES
+    Src/*.cpp
+)
+
+# ==================================================
+# Dearer ImGui
+# ==================================================
+set(DEARER_IMGUI_DIR ${CMAKE_SOURCE_DIR}/DearerImGui)
+
+add_subdirectory(${DEARER_IMGUI_DIR})
+
+# ==================================================
+# Create the executable
+# ==================================================
+add_executable(${PROJECT_NAME}
+    ${CPP_SOURCES}
+)
+
+# ==================================================
+# Includes
+# ==================================================
+target_include_directories(${PROJECT_NAME} PRIVATE
+	Src
+	${DEARER_IMGUI_DIR}/Src
+)
+
+# ==================================================
+# Link Libraries
+# ==================================================
+target_link_libraries(${PROJECT_NAME}
+	DearerImGui
+)

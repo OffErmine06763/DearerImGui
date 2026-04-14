@@ -1,0 +1,154 @@
+{
+	"version": 6,
+
+	"configurePresets": [
+		{
+			"name": "windows-debug",
+			"displayName": "Windows Debug",
+			"generator": "Ninja",
+			"binaryDir": "${sourceDir}/build/debug",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug",
+				"CMAKE_C_COMPILER": "cl",
+				"CMAKE_CXX_COMPILER": "cl"
+			},
+			"condition": {
+				"type": "equals",
+				"lhs": "${hostSystemName}",
+				"rhs": "Windows"
+			}
+		},
+		{
+			"name": "windows-release",
+			"displayName": "Windows Release",
+			"generator": "Ninja",
+			"binaryDir": "${sourceDir}/build/release",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Release",
+				"CMAKE_C_COMPILER": "cl",
+				"CMAKE_CXX_COMPILER": "cl"
+			},
+			"condition": {
+				"type": "equals",
+				"lhs": "${hostSystemName}",
+				"rhs": "Windows"
+			}
+		},
+		{
+			"name": "windows-reldeb",
+			"displayName": "Windows RelDeb",
+			"generator": "Ninja",
+			"binaryDir": "${sourceDir}/build/reldeb",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "RelWithDebInfo",
+				"CMAKE_C_COMPILER": "cl",
+				"CMAKE_CXX_COMPILER": "cl"
+			},
+			"condition": {
+				"type": "equals",
+				"lhs": "${hostSystemName}",
+				"rhs": "Windows"
+			}
+		},
+		{
+			"name": "linux-debug",
+			"displayName": "Linux Debug",
+			"generator": "Unix Makefiles",
+			"binaryDir": "${sourceDir}/build/debug",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug"
+			},
+			"condition": {
+				"type": "equals",
+				"lhs": "${hostSystemName}",
+				"rhs": "Linux"
+			}
+		},
+		{
+			"name": "linux-release",
+			"displayName": "Linux Release",
+			"generator": "Unix Makefiles",
+			"binaryDir": "${sourceDir}/build/release",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Release"
+			},
+			"condition": {
+				"type": "equals",
+				"lhs": "${hostSystemName}",
+				"rhs": "Linux"
+			}
+		},
+		{
+			"name": "linux-reldeb",
+			"displayName": "Linux RelDeb",
+			"generator": "Unix Makefiles",
+			"binaryDir": "${sourceDir}/build/reldeb",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "RelWithDebInfo"
+			},
+			"condition": {
+				"type": "equals",
+				"lhs": "${hostSystemName}",
+				"rhs": "Linux"
+			}
+		}
+	],
+
+	"buildPresets": [
+		{
+			"name": "windows-debug",
+			"configurePreset": "windows-debug"
+		},
+		{
+			"name": "windows-release",
+			"configurePreset": "windows-release"
+		},
+		{
+			"name": "windows-reldeb",
+			"configurePreset": "windows-reldeb"
+		},
+		{
+			"name": "linux-debug",
+			"configurePreset": "linux-debug"
+		},
+		{
+			"name": "linux-release",
+			"configurePreset": "linux-release"
+		},
+		{
+			"name": "linux-reldeb",
+			"configurePreset": "linux-reldeb"
+		}
+	],
+
+	"testPresets": [
+		{
+			"name": "windows-debug",
+			"configurePreset": "windows-debug",
+			"output": {
+				"outputOnFailure": true
+			}
+		},
+		{
+			"name": "windows-release",
+			"configurePreset": "windows-release",
+			"output": {
+				"outputOnFailure": true
+			}
+		},
+		{
+			"name": "linux-debug",
+			"configurePreset": "linux-debug",
+			"output": {
+				"outputOnFailure": true
+			}
+		},
+		{
+			"name": "linux-release",
+			"configurePreset": "linux-release",
+			"output": {
+				"outputOnFailure": true
+			}
+		}
+	]
+}
