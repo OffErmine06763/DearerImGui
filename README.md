@@ -20,3 +20,7 @@ Requires CMake.
 for a CMake file that links DearerImGui. Just adjust the `DEARER_IMGUI_DIR`
 variable to the path where the repo was cloned
 
+Anyway it's just a matter of adding a reference to DearerImGui CMake in your project's CMake
+	
+	add_subdirectory(DEARER/IMGUI/DIR)
+	target_link_libraries(${PROJECT_NAME} DearerImGui::DearerImGui)

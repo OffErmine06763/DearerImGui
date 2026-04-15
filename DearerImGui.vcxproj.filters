@@ -104,5 +104,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="CMakePresets.json" />
+    <None Include="README.md" />
+    <None Include="PreBuildCommands.bat">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include=".gitignore" />
   </ItemGroup>
 </Project>

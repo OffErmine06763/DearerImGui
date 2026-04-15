@@ -34,12 +34,11 @@ add_executable(${PROJECT_NAME}
 # ==================================================
 target_include_directories(${PROJECT_NAME} PRIVATE
 	Src
-	${DEARER_IMGUI_DIR}/Src
 )
 
 # ==================================================
 # Link Libraries
 # ==================================================
 target_link_libraries(${PROJECT_NAME}
-	DearerImGui
+	DearerImGui::DearerImGui
 )

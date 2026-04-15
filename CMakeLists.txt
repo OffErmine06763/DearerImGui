@@ -3,10 +3,13 @@ cmake_minimum_required(VERSION 3.16)
 project(DearerImGui LANGUAGES C CXX)
 
 # ==================================================
-# C++ Standard
+# C/C++ Standard
 # ==================================================
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # ==================================================
 # Options
@@ -58,11 +61,12 @@ add_library(${PROJECT_NAME}
     ${CPP_SOURCES}
     ${IMGUI_SOURCES}
 )
+add_library(DearerImGui::DearerImGui ALIAS ${PROJECT_NAME})
 
 # ==================================================
 # Includes
 # ==================================================
-target_include_directories(${PROJECT_NAME} PRIVATE
+target_include_directories(${PROJECT_NAME} PUBLIC
 	Src
 	Vendor/ImGui
 	Vendor/ImGui/backends
@@ -73,7 +77,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 # ==================================================
 # Link Libraries
 # ==================================================
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME} PUBLIC
 	glad
 	glfw
 )
@@ -86,8 +90,9 @@ if (APPLE)
 	    "-framework OpenGL"
 	)
 elseif (WIN32)
-	target_link_libraries(${PROJECT_NAME}
-	    opengl32
+	find_package(OpenGL REQUIRED)
+	target_link_libraries(${PROJECT_NAME} PUBLIC
+	    OpenGL::GL
 	)
 else ()
 	find_package(OpenGL REQUIRED)
