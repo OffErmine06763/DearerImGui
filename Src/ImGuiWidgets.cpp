@@ -1,13 +1,31 @@
 #include "ImGuiWidgets.hpp"
 
-#include <imgui.h>
-#include <imgui_internal.h>
+/*
+
+// [SECTION] Forward Declarations of ImGui Internals Copies
+// [SECTION] Custom Widgets
+// [SECTION] Modified ImGui Widgets
+// [SECTION] Utility Functions
+// [SECTION] ImGui Internal Copies
+
+*/
+
+//-------------------------------------------------------------------------
+// [SECTION] Forward Declarations of ImGui Internals
+//-------------------------------------------------------------------------
+
+static void BoxSelectPreStartDrag(ImGuiID id, ImGuiSelectionUserData clicked_item);
+static void BoxSelectDeactivateDrag(ImGuiBoxSelectState* bs);
+static void DebugLogMultiSelectRequests(const char* function, const ImGuiMultiSelectIO* io);
+static ImRect CalcScopeRect(ImGuiMultiSelectTempData* ms, ImGuiWindow* window);
 
 
-float Lerp(float a, float b, float t)
-{
-	return a + (b - a) * t;
-}
+//-------------------------------------------------------------------------
+// [SECTION] Custom Widgets
+//-------------------------------------------------------------------------
+// - DrawLegendScale
+// - DrawStackedProgressBar
+
 void DrawLegendScale(ImVec2 size, float min, float max)
 {
 	ImGui::Text("%.2f", min);
@@ -46,72 +64,6 @@ void DrawLegendScale(ImVec2 size, float min, float max)
 	ImGui::SameLine();
 	ImGui::Text("%.2f", max);
 }
-
-
-float AngleFromCenter(ImVec2 center, ImVec2 point)
-{
-	return atan2f(point.y - center.y, point.x - center.x);
-}
-int DrawPieChart(const std::vector<float>& values, const std::vector<ImU32>& colors, float radius)
-{
-	ImDrawList* draw_list = ImGui::GetWindowDrawList();
-
-	ImVec2 pos = ImGui::GetCursorScreenPos();
-	ImVec2 center = { pos.x + radius, pos.y + radius };
-
-	ImVec2 mouse = ImGui::GetIO().MousePos;
-	float mouse_dist = (mouse.x - center.x) * (mouse.x - center.x) + (mouse.y - center.y) * (mouse.y - center.y);
-	float mouse_angle = AngleFromCenter(center, mouse);
-
-	float total = 0.0f;
-	for (float v : values)
-		total += v;
-
-	float start_angle = -IM_PI / 2.0f;
-	int hovered_index = -1;
-
-	for (int i = 0; i < values.size(); i++)
-	{
-		float slice_angle = (values[i] / total) * IM_PI * 2.0f;
-		float end_angle = start_angle + slice_angle;
-
-		bool hovered = false;
-
-		if (mouse_dist <= radius * radius)
-		{
-			// Normalize angle range
-			float a = mouse_angle;
-			if (a < start_angle) a += IM_PI * 2.0f;
-
-			hovered = (a >= start_angle && a <= end_angle);
-		}
-
-		ImU32 color = colors[i];
-
-		// Brighten hovered slice
-		if (hovered)
-		{
-			hovered_index = i;
-			ImVec4 c = ImGui::ColorConvertU32ToFloat4(color);
-			c.x = ImMin(c.x * 1.2f, 1.0f);
-			c.y = ImMin(c.y * 1.2f, 1.0f);
-			c.z = ImMin(c.z * 1.2f, 1.0f);
-			color = ImGui::ColorConvertFloat4ToU32(c);
-		}
-
-		draw_list->PathClear();
-		draw_list->PathArcTo(center, radius, start_angle, end_angle, 32);
-		draw_list->PathLineTo(center);
-		draw_list->PathFillConvex(color);
-
-		start_angle = end_angle;
-	}
-
-	ImGui::Dummy(ImVec2(radius * 2, radius * 2));
-	return hovered_index;
-}
-
-
 
 int DrawStackedProgressBar(const std::vector<float>& values, const ImVec2& size)
 {
@@ -175,4 +127,176 @@ int DrawStackedProgressBar(const std::vector<float>& values, const ImVec2& size)
 	}
 
 	return hovering;
+}
+
+
+//-------------------------------------------------------------------------
+// [SECTION] Modified ImGui Widgets
+//-------------------------------------------------------------------------
+// - MyEndMultiSelect
+
+/// Fixes a bug with the ImGui::EndMultiSelect, that occurs when selecting and deselecting ranges, causing a erroneous start of range selection
+/// This is based on v1.92.7
+ImGuiMultiSelectIO* MyEndMultiSelect()
+{
+	using namespace ImGui;
+
+	ImGuiContext& g = *GImGui;
+	ImGuiMultiSelectTempData* ms = g.CurrentMultiSelect;
+	ImGuiMultiSelectState* storage = ms->Storage;
+	ImGuiWindow* window = g.CurrentWindow;
+	IM_ASSERT_USER_ERROR(ms->FocusScopeId == g.CurrentFocusScopeId, "EndMultiSelect() FocusScope mismatch!");
+	IM_ASSERT(g.CurrentMultiSelect != NULL && storage->Window == g.CurrentWindow);
+	IM_ASSERT(g.MultiSelectTempDataStacked > 0 && &g.MultiSelectTempData[g.MultiSelectTempDataStacked - 1] == g.CurrentMultiSelect);
+
+	ImRect scope_rect = CalcScopeRect(ms, window);
+	if (ms->IsFocused)
+	{
+		// We currently don't allow user code to modify RangeSrcItem by writing to BeginIO's version, but that would be an easy change here.
+		if (ms->IO.RangeSrcReset || (ms->RangeSrcPassedBy == false && ms->IO.RangeSrcItem != ImGuiSelectionUserData_Invalid)) // Can't read storage->RangeSrcItem here -> we want the state at begining of the scope (see tests for easy failure)
+		{
+			IMGUI_DEBUG_LOG_SELECTION("[selection] EndMultiSelect: Reset RangeSrcItem.\n"); // Will set be to NavId.
+			storage->RangeSrcItem = ImGuiSelectionUserData_Invalid;
+		}
+		if (ms->NavIdPassedBy == false && storage->NavIdItem != ImGuiSelectionUserData_Invalid)
+		{
+			IMGUI_DEBUG_LOG_SELECTION("[selection] EndMultiSelect: Reset NavIdItem.\n");
+			storage->NavIdItem = ImGuiSelectionUserData_Invalid;
+			storage->NavIdSelected = -1;
+		}
+
+		if ((ms->Flags & (ImGuiMultiSelectFlags_BoxSelect1d | ImGuiMultiSelectFlags_BoxSelect2d)) && GetBoxSelectState(ms->BoxSelectId))
+			EndBoxSelect(scope_rect, ms->Flags);
+	}
+
+	if (ms->IsEndIO == false)
+		ms->IO.Requests.resize(0);
+
+	// Clear selection when clicking void?
+	// We specifically test for IsMouseDragPastThreshold(0) == false to allow box-selection!
+	// The InnerRect test is necessary for non-child/decorated windows.
+	bool scope_hovered = IsWindowHovered() && window->InnerRect.Contains(g.IO.MousePos);
+	if (scope_hovered && (ms->Flags & ImGuiMultiSelectFlags_ScopeRect))
+		scope_hovered &= scope_rect.Contains(g.IO.MousePos);
+	if (scope_hovered && g.HoveredId == 0 && g.ActiveId == 0)
+	{
+		if (ms->Flags & (ImGuiMultiSelectFlags_BoxSelect1d | ImGuiMultiSelectFlags_BoxSelect2d))
+		{
+			if (!g.BoxSelectState.IsActive && !g.BoxSelectState.IsStarting && g.IO.MouseClickedCount[0] == 1)
+			{
+				BoxSelectPreStartDrag(ms->BoxSelectId, ImGuiSelectionUserData_Invalid);
+				FocusWindow(window, ImGuiFocusRequestFlags_UnlessBelowModal);
+				SetHoveredID(ms->BoxSelectId);
+				if (ms->Flags & ImGuiMultiSelectFlags_ScopeRect)
+					SetNavID(0, ImGuiNavLayer_Main, ms->FocusScopeId, ImRect(g.IO.MousePos, g.IO.MousePos)); // Automatically switch FocusScope for initial click from void to box-select.
+			}
+		}
+
+		if (ms->Flags & ImGuiMultiSelectFlags_ClearOnClickVoid)
+		{
+			if (IsMouseReleased(0) && IsMouseDragPastThreshold(0) == false && g.IO.KeyMods == ImGuiMod_None)
+			{
+				MultiSelectAddSetAll(ms, false);
+				ms->Storage->RangeSrcItem = ms->Storage->NavIdItem;
+			}
+		}
+	}
+
+	// Courtesy nav wrapping helper flag
+	if (ms->Flags & ImGuiMultiSelectFlags_NavWrapX)
+	{
+		IM_ASSERT(ms->Flags & ImGuiMultiSelectFlags_ScopeWindow); // Only supported at window scope
+		ImGui::NavMoveRequestTryWrapping(ImGui::GetCurrentWindow(), ImGuiNavMoveFlags_WrapX);
+	}
+
+	// Unwind
+	window->DC.CursorMaxPos = ImMax(ms->BackupCursorMaxPos, window->DC.CursorMaxPos);
+	PopFocusScope();
+
+	if (g.DebugLogFlags & ImGuiDebugLogFlags_EventSelection)
+		DebugLogMultiSelectRequests("EndMultiSelect", &ms->IO);
+
+	ms->FocusScopeId = 0;
+	ms->Flags = ImGuiMultiSelectFlags_None;
+	g.CurrentMultiSelect = (--g.MultiSelectTempDataStacked > 0) ? &g.MultiSelectTempData[g.MultiSelectTempDataStacked - 1] : NULL;
+
+	return &ms->IO;
+}
+
+
+
+
+//-------------------------------------------------------------------------
+// [SECTION] Utility Functions
+//-------------------------------------------------------------------------
+
+
+float Lerp(float a, float b, float t)
+{
+	return a + (b - a) * t;
+}
+
+
+//-------------------------------------------------------------------------
+// [SECTION] ImGui Internal Copies
+//-------------------------------------------------------------------------
+// - BoxSelectPreStartDrag
+// - BoxSelectDeactivateDrag
+// - DebugLogMultiSelectRequests
+// - CalcScopeRect
+
+static void BoxSelectPreStartDrag(ImGuiID id, ImGuiSelectionUserData clicked_item)
+{
+	ImGuiContext& g = *GImGui;
+	ImGuiBoxSelectState* bs = &g.BoxSelectState;
+	bs->ID = id;
+	bs->IsStarting = true; // Consider starting box-select.
+	bs->IsStartedFromVoid = (clicked_item == ImGuiSelectionUserData_Invalid);
+	bs->IsStartedSetNavIdOnce = bs->IsStartedFromVoid;
+	bs->KeyMods = g.IO.KeyMods;
+	bs->StartPosRel = bs->EndPosRel = ImGui::WindowPosAbsToRel(g.CurrentWindow, g.IO.MousePos);
+	bs->ScrollAccum = ImVec2(0.0f, 0.0f);
+}
+static void BoxSelectDeactivateDrag(ImGuiBoxSelectState* bs)
+{
+	ImGuiContext& g = *GImGui;
+	bs->IsActive = bs->IsStarting = false;
+	if (g.ActiveId == bs->ID)
+	{
+		IMGUI_DEBUG_LOG_SELECTION("[selection] BeginBoxSelect() 0X%08X: Deactivate\n", bs->ID);
+		ImGui::ClearActiveID();
+	}
+	bs->ID = 0;
+}
+
+static void DebugLogMultiSelectRequests(const char* function, const ImGuiMultiSelectIO* io)
+{
+	ImGuiContext& g = *GImGui;
+	IM_UNUSED(function);
+	for (const ImGuiSelectionRequest& req : io->Requests)
+	{
+		if (req.Type == ImGuiSelectionRequestType_SetAll)    IMGUI_DEBUG_LOG_SELECTION("[selection] %s: Request: SetAll %d (= %s)\n", function, req.Selected, req.Selected ? "SelectAll" : "Clear");
+		if (req.Type == ImGuiSelectionRequestType_SetRange)  IMGUI_DEBUG_LOG_SELECTION("[selection] %s: Request: SetRange %" IM_PRId64 "..%" IM_PRId64 " (0x%" IM_PRIX64 "..0x%" IM_PRIX64 ") = %d (dir %d)\n", function, req.RangeFirstItem, req.RangeLastItem, req.RangeFirstItem, req.RangeLastItem, req.Selected, req.RangeDirection);
+	}
+}
+
+static ImRect CalcScopeRect(ImGuiMultiSelectTempData* ms, ImGuiWindow* window)
+{
+	ImGuiContext& g = *GImGui;
+	if (ms->Flags & ImGuiMultiSelectFlags_ScopeRect)
+	{
+		// Warning: this depends on CursorMaxPos so it means to be called by EndMultiSelect() only
+		return ImRect(ms->ScopeRectMin, ImMax(window->DC.CursorMaxPos, ms->ScopeRectMin));
+	}
+	else
+	{
+		// When a table, pull HostClipRect, which allows us to predict ClipRect before first row/layout is performed. (#7970)
+		ImRect scope_rect = window->InnerClipRect;
+		if (g.CurrentTable != NULL)
+			scope_rect = g.CurrentTable->HostClipRect;
+
+		// Add inner table decoration (#7821) // FIXME: Why not baking in InnerClipRect?
+		scope_rect.Min = ImMin(scope_rect.Min + ImVec2(window->DecoInnerSizeX1, window->DecoInnerSizeY1), scope_rect.Max);
+		return scope_rect;
+	}
 }

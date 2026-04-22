@@ -33,7 +33,7 @@
     <ClCompile Include="Vendor\ImGui\imgui_widgets.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Main.cpp">
+    <ClCompile Include="Src\DearerImGui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Vendor\ImGui\backends\imgui_impl_glfw.cpp">
@@ -95,7 +95,7 @@
     <ClInclude Include="Vendor\GLFW\include\GLFW\glfw3native.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Src\Main.hpp">
+    <ClInclude Include="Src\DearerImGui.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

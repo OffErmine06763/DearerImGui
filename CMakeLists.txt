@@ -20,7 +20,7 @@ option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 # Source Files
 # ==================================================
 file(GLOB_RECURSE CPP_SOURCES
-    Src/*.cpp
+	Src/*.cpp
 )
 
 # ==================================================
@@ -58,8 +58,8 @@ add_subdirectory(Vendor/GLFW)
 # Create the library (STATIC or SHARED controlled by BUILD_SHARED_LIBS)
 # ==================================================
 add_library(${PROJECT_NAME}
-    ${CPP_SOURCES}
-    ${IMGUI_SOURCES}
+	${CPP_SOURCES}
+	${IMGUI_SOURCES}
 )
 add_library(DearerImGui::DearerImGui ALIAS ${PROJECT_NAME})
 
@@ -87,19 +87,19 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 # ==================================================
 if (APPLE)
 	target_link_libraries(${PROJECT_NAME}
-	    "-framework OpenGL"
+		"-framework OpenGL"
 	)
 elseif (WIN32)
 	find_package(OpenGL REQUIRED)
 	target_link_libraries(${PROJECT_NAME} PUBLIC
-	    OpenGL::GL
+		OpenGL::GL
 	)
 else ()
 	find_package(OpenGL REQUIRED)
 	find_package(X11 REQUIRED)
 	
 	target_link_libraries(${PROJECT_NAME}
-	    OpenGL::GL
-	    X11::X11
+		OpenGL::GL
+		X11::X11
 	)
 endif()
