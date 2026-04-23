@@ -291,7 +291,9 @@
   <ItemGroup>
     <ClCompile Include="Src\ImGuiWidgets.cpp" />
     <ClCompile Include="Src\DearerImGui.cpp" />
+    <ClCompile Include="Src\Renderable.cpp" />
     <ClCompile Include="Src\Utility.cpp" />
+    <ClCompile Include="Src\UIApp.cpp" />
     <ClCompile Include="Vendor\GLAD\src\glad.c" />
     <ClCompile Include="Vendor\ImGui\backends\imgui_impl_glfw.cpp" />
     <ClCompile Include="Vendor\ImGui\backends\imgui_impl_opengl3.cpp" />
@@ -304,6 +306,8 @@
   <ItemGroup>
     <ClInclude Include="Src\ImGuiWidgets.hpp" />
     <ClInclude Include="Src\DearerImGui.hpp" />
+    <ClInclude Include="Src\Renderable.h" />
+    <ClInclude Include="Src\UIApp.h" />
     <ClInclude Include="Src\Utility.hpp" />
     <ClInclude Include="Vendor\GLAD\include\glad\glad.h" />
     <ClInclude Include="Vendor\GLAD\include\KHR\khrplatform.h" />
