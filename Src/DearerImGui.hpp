@@ -1,5 +1,4 @@
 #pragma once
-#include "Utility.hpp"
 
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_DEFINE_MATH_OPERATORS

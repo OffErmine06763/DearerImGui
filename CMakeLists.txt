@@ -1,20 +1,16 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.20)
 
 project(DearerImGui LANGUAGES C CXX)
 
 # ==================================================
 # C/C++ Standard
 # ==================================================
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-# ==================================================
-# Options
-# ==================================================
-option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
 # ==================================================
 # Source Files
@@ -38,6 +34,7 @@ set(IMGUI_SOURCES
 	${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
 )
 
+
 # ==================================================
 # GLAD
 # ==================================================
@@ -55,9 +52,9 @@ target_include_directories(glad PUBLIC
 add_subdirectory(Vendor/GLFW)
 
 # ==================================================
-# Create the library (STATIC or SHARED controlled by BUILD_SHARED_LIBS)
+# Create static library
 # ==================================================
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME} STATIC
 	${CPP_SOURCES}
 	${IMGUI_SOURCES}
 )

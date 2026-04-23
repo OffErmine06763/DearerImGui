@@ -1,6 +1,5 @@
 #pragma once
 #include "Renderable.h"
-#include "DearerImGui.hpp"
 
 class UIApp
 {
@@ -91,8 +90,9 @@ public:
 	static void HRLoadUIDLL()
 	{
 		// TODO: fix the hardcoded path, also giveup on visual studio since it doesn't support recompiling a single project while the others are running
-#ifdef HOT_RELOAD
-		fs::path p = fs::current_path() / "..\\x64\\Debug Dynamic\\UI.dll";
+#ifdef UI_HOT_RELOAD
+		// fs::path p = fs::current_path() / "..\\x64\\Debug Dynamic\\UI.dll";
+		fs::path p = "build/debug/UI.dll";
 		bool res = CopyFileA(p.string().c_str(), "UI_temp.dll", FALSE);
 		if (res == 0)
 			std::cout << GetLastError();
@@ -104,13 +104,13 @@ public:
 	}
 	static void HRUnloadUIDLL()
 	{
-#ifdef HOT_RELOAD
+#ifdef UI_HOT_RELOAD
 		Loader::Unload("UI_temp.dll");
 #endif
 	}
 	static void HRReloadUIDLL()
 	{
-#ifdef HOT_RELOAD
+#ifdef UI_HOT_RELOAD
 		HRUnloadUIDLL();
 		HRLoadUIDLL();
 		if (Instance != nullptr && Instance->m_Page != nullptr)

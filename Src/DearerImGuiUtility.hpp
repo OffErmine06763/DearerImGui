@@ -349,12 +349,14 @@ struct expected
 #define CLOSE_LIB(lib) FreeLibrary((HMODULE)lib)
 #define Handle HMODULE
 #define EXPORT __declspec(dllexport)
+#define IMPORT __declspec(dllimport)
 #else
 #define LOAD_LIB(path) dlopen(path, RTLD_NOW)
 #define LOAD_SYM(lib, name) dlsym(lib, name)
 #define CLOSE_LIB(lib) dlclose(lib)
 #define Handle void*
 #define EXPORT
+#define IMPORT
 #endif
 
 class Loader

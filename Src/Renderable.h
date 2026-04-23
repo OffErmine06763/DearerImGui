@@ -1,7 +1,7 @@
 #pragma once
-#include "Utility.hpp"
+#include "DearerImGuiUtility.hpp"
 
-#ifdef HOT_RELOAD
+#ifdef UI_HOT_RELOAD
 #define BIND_RENDER_FUNCTION(type, fn) m_Render = Loader::GetFunction<consumer<type*>>("UI_temp.dll", #fn).value();
 #else
 #define BIND_RENDER_FUNCTION(type, fn) m_Render = fn;

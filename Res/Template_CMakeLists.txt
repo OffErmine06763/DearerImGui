@@ -1,33 +1,70 @@
-cmake_minimum_required(VERSION 3.16)
-
-project(App LANGUAGES C CXX)
+cmake_minimum_required(VERSION 3.20)
+project(App CXX)
 
 # ==================================================
 # C++ Standard
 # ==================================================
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+option(BUILD_UI_ONLY "Build only UI layouts" OFF) # todo: allow passing the directory of the layouts
+option(UI_ENABLE_HOT_RELOAD "Build rendering as hot-reload module" OFF)
 
 # ==================================================
 # Source Files
 # ==================================================
 file(GLOB_RECURSE CPP_SOURCES
-    Src/*.cpp
+	Src/*.cpp
+)
+file(GLOB_RECURSE UI_SOURCES
+	Src/UI/*.cpp
 )
 
 # ==================================================
 # Dearer ImGui
 # ==================================================
-set(DEARER_IMGUI_DIR ${CMAKE_SOURCE_DIR}/DearerImGui)
-
+set(DEARER_IMGUI_DIR Vendor/DearerImGui)
 add_subdirectory(${DEARER_IMGUI_DIR})
+
 
 # ==================================================
 # Create the executable
 # ==================================================
-add_executable(${PROJECT_NAME}
-    ${CPP_SOURCES}
-)
+add_executable(${PROJECT_NAME})
+
+# ==================================================
+# Set the source files
+# ==================================================
+if(BUILD_UI_ONLY)
+	message("Building UI Only")
+	target_sources(${PROJECT_NAME} PRIVATE ${UI_SOURCES})
+elseif(UI_ENABLE_HOT_RELOAD)
+	message("Hot Reload Enabled")
+	list(REMOVE_ITEM CPP_SOURCES ${UI_SOURCES})
+	target_sources(${PROJECT_NAME} PRIVATE ${CPP_SOURCES})
+else()
+	target_sources(${PROJECT_NAME} PRIVATE ${CPP_SOURCES})
+endif()
+
+# ==================================================
+# Create UI dynamic library
+# ==================================================
+if(UI_ENABLE_HOT_RELOAD)
+	add_library(ui SHARED ${UI_SOURCES})
+	if(WIN32)
+		set_target_properties(ui PROPERTIES
+			OUTPUT_NAME "UI"
+		)
+	else()
+		set_target_properties(ui PROPERTIES
+			OUTPUT_NAME "UI"
+			PREFIX ""   # makes it UI.so instead of libUI.so
+		)
+	endif()
+	target_link_libraries(ui
+		DearerImGui::DearerImGui
+	)
+endif()
 
 # ==================================================
 # Includes
@@ -42,3 +79,16 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_link_libraries(${PROJECT_NAME}
 	DearerImGui::DearerImGui
 )
+
+
+# ==================================================
+# Defines
+# ==================================================
+if(UI_ENABLE_HOT_RELOAD)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE UI_HOT_RELOAD)
+	target_compile_definitions(ui PRIVATE UI_HOT_RELOAD)
+	target_compile_definitions(ui PRIVATE BUILD_UI)
+else()
+	target_compile_definitions(${PROJECT_NAME} PRIVATE NO_UI_HOT_RELOAD)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE BUILD_UI)
+endif()

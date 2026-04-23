@@ -24,3 +24,14 @@ Anyway it's just a matter of adding a reference to DearerImGui CMake in your pro
 	
 	add_subdirectory(DEARER/IMGUI/DIR)
 	target_link_libraries(${PROJECT_NAME} DearerImGui::DearerImGui)
+
+
+
+
+
+
+
+
+cmake --preset windows-debug -DUI_ENABLE_HOT_RELOAD=ON
+cmake --preset windows-debug -DBUILD_UI_ONLY=ON -DUI_ENABLE_HOT_RELOAD=ON
+cmake --build build/debug
