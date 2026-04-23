@@ -6,9 +6,8 @@ TODO: write stuff
 
 ### Windows - Visual Studio
 
-To use this in Visual Studio just git clone the project in the root directory of 
-solution, add it as existing project and add a reference to it in the project
-that needs to use it.
+To use this in Visual Studio just git clone (or add submodule) the project wherever you want it in the solution,
+add it as existing project and add a reference to it in the projects that need to use it.
 
 > Note to myself: Compilation of GLFW is handled by PreBuildCommands.bat
 
@@ -33,5 +32,5 @@ Anyway it's just a matter of adding a reference to DearerImGui CMake in your pro
 
 
 cmake --preset windows-debug -DUI_ENABLE_HOT_RELOAD=ON
-cmake --preset windows-debug -DBUILD_UI_ONLY=ON -DUI_ENABLE_HOT_RELOAD=ON
 cmake --build build/debug
+cmake --build build/debug --target UI

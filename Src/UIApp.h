@@ -91,11 +91,11 @@ public:
 	{
 		// TODO: fix the hardcoded path, also giveup on visual studio since it doesn't support recompiling a single project while the others are running
 #ifdef UI_HOT_RELOAD
-		// fs::path p = fs::current_path() / "..\\x64\\Debug Dynamic\\UI.dll";
-		fs::path p = "build/debug/UI.dll";
-		bool res = CopyFileA(p.string().c_str(), "UI_temp.dll", FALSE);
-		if (res == 0)
-			std::cout << GetLastError();
+		bool res = CopyFileA(UI_DLL_FILE, "UI_temp.dll", FALSE);
+		if (res == 0) {
+			std::cout << "######################### " << GetLastError() << '\n';
+			exit(1);
+		}
 		Loader::Load("UI_temp.dll");
 
 		auto fn = Loader::GetFunction<std::function<void(void*)>>("UI_temp.dll", "OnLoad").value();

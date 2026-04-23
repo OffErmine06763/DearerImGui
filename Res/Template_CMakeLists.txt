@@ -7,8 +7,10 @@ project(App CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-option(BUILD_UI_ONLY "Build only UI layouts" OFF) # todo: allow passing the directory of the layouts
 option(UI_ENABLE_HOT_RELOAD "Build rendering as hot-reload module" OFF)
+
+set(DEARER_IMGUI_DIR Vendor/DearerImGui)
+set(UI_DIR "Src/UI" CACHE PATH "Path to UI source files to be hot-reloaded")
 
 # ==================================================
 # Source Files
@@ -17,13 +19,12 @@ file(GLOB_RECURSE CPP_SOURCES
 	Src/*.cpp
 )
 file(GLOB_RECURSE UI_SOURCES
-	Src/UI/*.cpp
+	${UI_DIR}/*.cpp
 )
 
 # ==================================================
 # Dearer ImGui
 # ==================================================
-set(DEARER_IMGUI_DIR Vendor/DearerImGui)
 add_subdirectory(${DEARER_IMGUI_DIR})
 
 
@@ -35,36 +36,31 @@ add_executable(${PROJECT_NAME})
 # ==================================================
 # Set the source files
 # ==================================================
-if(BUILD_UI_ONLY)
-	message("Building UI Only")
-	target_sources(${PROJECT_NAME} PRIVATE ${UI_SOURCES})
-elseif(UI_ENABLE_HOT_RELOAD)
+if(UI_ENABLE_HOT_RELOAD)
+	
 	message("Hot Reload Enabled")
 	list(REMOVE_ITEM CPP_SOURCES ${UI_SOURCES})
 	target_sources(${PROJECT_NAME} PRIVATE ${CPP_SOURCES})
-else()
-	target_sources(${PROJECT_NAME} PRIVATE ${CPP_SOURCES})
-endif()
+	
+	add_library(UI SHARED ${UI_SOURCES})
 
-# ==================================================
-# Create UI dynamic library
-# ==================================================
-if(UI_ENABLE_HOT_RELOAD)
-	add_library(ui SHARED ${UI_SOURCES})
 	if(WIN32)
-		set_target_properties(ui PROPERTIES
+		set_target_properties(UI PROPERTIES
 			OUTPUT_NAME "UI"
 		)
 	else()
-		set_target_properties(ui PROPERTIES
+		set_target_properties(UI PROPERTIES
 			OUTPUT_NAME "UI"
 			PREFIX ""   # makes it UI.so instead of libUI.so
 		)
 	endif()
-	target_link_libraries(ui
-		DearerImGui::DearerImGui
-	)
+
+	target_link_libraries(UI DearerImGui::DearerImGui)
+
+else()
+	target_sources(${PROJECT_NAME} PRIVATE ${CPP_SOURCES})
 endif()
+
 
 # ==================================================
 # Includes
@@ -86,8 +82,10 @@ target_link_libraries(${PROJECT_NAME}
 # ==================================================
 if(UI_ENABLE_HOT_RELOAD)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE UI_HOT_RELOAD)
-	target_compile_definitions(ui PRIVATE UI_HOT_RELOAD)
-	target_compile_definitions(ui PRIVATE BUILD_UI)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE UI_DLL_FILE="${CMAKE_BINARY_DIR}/UI.dll")
+	target_compile_definitions(UI PRIVATE UI_HOT_RELOAD)
+	target_compile_definitions(UI PRIVATE BUILD_UI)
+	target_compile_definitions(UI PRIVATE UI_DLL_FILE="${CMAKE_BINARY_DIR}/UI.dll")
 else()
 	target_compile_definitions(${PROJECT_NAME} PRIVATE NO_UI_HOT_RELOAD)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE BUILD_UI)
